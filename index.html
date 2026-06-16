@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<meta name="theme-color" content="#1f6f4a" />
+<meta name="description" content="Living vs. Non-Living Sorter — a hands-on classification activity for Grades 1–3. Works offline, fully keyboard accessible." />
+<title>Living vs. Non-Living Sorter</title>
+<style>
+  :root {
+    --color-bg: #ffffff;
+    --color-surface: #f4f7f5;
+    --color-surface-raised: #ffffff;
+    --color-border: #c2cdc6;
+    --color-text: #14201a;
+    --color-text-muted: #455c50;
+    --color-text-inverse: #ffffff;
+    --color-primary: #1f6f4a;
+    --color-primary-strong: #165236;
+    --color-primary-soft: #d9ece2;
+    --color-living: #1f7a3d;
+    --color-living-soft: #d7eedd;
+    --color-nonliving: #1d5a8a;
+    --color-nonliving-soft: #d6e6f2;
+    --color-warning: #8a5a00;
+    --color-warning-soft: #fff4e0;
+    --color-focus: #0b5bd3;
+
+    --text-sm: 1rem;
+    --text-base: 1.25rem;
+    --text-lg: 1.5rem;
+    --text-xl: 2rem;
+    --text-2xl: 2.75rem;
+
+    --space-1: 0.5rem;
+    --space-2: 1rem;
+    --space-3: 1.5rem;
+    --space-4: 2rem;
+
+    --touch-min: 64px;
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --shadow-1: 0 1px 3px rgba(20,32,26,0.12);
+    --shadow-2: 0 4px 12px rgba(20,32,26,0.16);
+    --focus-ring-width: 4px;
+    --focus-ring-offset: 3px;
+    --transition-fast: 120ms ease-out;
+    --transition-base: 220ms ease-out;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #0e1714;
+      --color-surface: #16231d;
+      --color-surface-raised: #1d2e26;
+      --color-border: #3a4f45;
+      --color-text: #eef5f1;
+      --color-text-muted: #b3c6bc;
+      --color-text-inverse: #0e1714;
+      --color-primary: #4fbf85;
+      --color-primary-strong: #6fd49f;
+      --color-primary-soft: #1d3a2c;
+      --color-living: #5fc77a;
+      --color-living-soft: #1d3a28;
+      --color-nonliving: #69aede;
+      --color-nonliving-soft: #16314a;
+      --color-warning-soft: #3a2c12;
+      --color-focus: #8ab8ff;
+      --shadow-1: 0 1px 3px rgba(0,0,0,0.5);
+      --shadow-2: 0 4px 12px rgba(0,0,0,0.6);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root { --transition-fast: 0ms; --transition-base: 0ms; }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: var(--text-base);
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  :where(a, button, [tabindex]):focus-visible {
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: var(--radius-sm);
+  }
+
+  .skip-link {
+    position: absolute; left: var(--space-2); top: -100%;
+    z-index: 100; padding: var(--space-2) var(--space-3);
+    background: var(--color-primary); color: var(--color-text-inverse);
+    font-weight: 700; border-radius: var(--radius-sm);
+    text-decoration: none; transition: top var(--transition-fast);
+  }
+  .skip-link:focus { top: var(--space-2); }
+
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px;
+    padding: 0; overflow: hidden; clip: rect(0 0 0 0);
+    clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+
+  .shell {
+    display: flex; flex-direction: column; min-height: 100dvh;
+    max-width: 1200px; margin-inline: auto;
+    padding: var(--space-3); gap: var(--space-3);
+  }
+
+  .header { text-align: center; }
+  .title {
+    margin: 0; font-size: var(--text-2xl); font-weight: 700;
+    line-height: 1.1; color: var(--color-primary-strong);
+  }
+  .summary {
+    margin: var(--space-1) 0 0; font-size: var(--text-lg);
+    color: var(--color-text-muted);
+  }
+
+  .status {
+    margin: 0; padding: var(--space-2) var(--space-3);
+    font-size: var(--text-lg); font-weight: 700; text-align: center;
+    color: var(--color-text); background: var(--color-primary-soft);
+    border-radius: var(--radius-md); min-height: var(--touch-min);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .bins {
+    display: grid; grid-template-columns: 1fr; gap: var(--space-3);
+  }
+  @media (min-width: 40rem) { .bins { grid-template-columns: 1fr 1fr; } }
+
+  .bin {
+    display: flex; flex-direction: column; gap: var(--space-1);
+    width: 100%; min-height: 14rem; padding: var(--space-3);
+    text-align: left; font: inherit;
+    background: var(--color-surface-raised);
+    border: 4px solid var(--color-border); border-radius: var(--radius-lg);
+    cursor: default;
+    transition: border-color var(--transition-base),
+                background var(--transition-base),
+                transform var(--transition-fast);
+  }
+  .bin--living { border-color: var(--color-living); background: var(--color-living-soft); }
+  .bin--nonliving { border-color: var(--color-nonliving); background: var(--color-nonliving-soft); }
+  .bin--over { transform: scale(1.02); box-shadow: var(--shadow-2); filter: brightness(1.03); }
+  .bin--armed {
+    cursor: pointer;
+    outline: var(--focus-ring-width) dashed var(--color-focus);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .bin__header { display: flex; align-items: center; gap: var(--space-1); }
+  .bin__glyph { font-size: var(--text-2xl); line-height: 1; }
+  .bin__title { font-size: var(--text-xl); font-weight: 700; }
+  .bin__hint { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .bin__items {
+    display: flex; flex-wrap: wrap; gap: var(--space-2);
+    margin-top: var(--space-2); align-content: flex-start;
+  }
+
+  .pool {
+    background: var(--color-surface); border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg); padding: var(--space-3);
+  }
+  .pool__title { margin: 0 0 var(--space-2); font-size: var(--text-lg); font-weight: 700; }
+  .pool__items { display: flex; flex-wrap: wrap; gap: var(--space-2); align-content: flex-start; }
+  .pool__empty { margin: 0; font-size: var(--text-base); color: var(--color-text-muted); }
+
+  .item {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 0.25rem; position: relative;
+    min-width: 6.5rem; min-height: 6.5rem; padding: var(--space-2);
+    font: inherit; background: var(--color-surface-raised);
+    border: 4px solid var(--color-border); border-radius: var(--radius-md);
+    cursor: grab; touch-action: none;
+    transition: transform var(--transition-fast),
+                border-color var(--transition-base),
+                box-shadow var(--transition-fast),
+                opacity var(--transition-base);
+  }
+  .item:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+  .item:active { cursor: grabbing; transform: scale(0.97); }
+  .item__glyph { color: var(--color-text); }
+  .item__glyph svg { display: block; }
+  .item__label { font-size: var(--text-base); font-weight: 700; color: var(--color-text); }
+
+  .item--selected {
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--color-focus), var(--shadow-2);
+    transform: translateY(-3px) scale(1.04);
+  }
+  .item--misplaced {
+    border-style: dashed; border-color: var(--color-warning);
+    background: var(--color-warning-soft); opacity: 0.85;
+  }
+  .item--locked {
+    border-style: solid; border-color: var(--color-living);
+    background: var(--color-living-soft); cursor: default; opacity: 1;
+  }
+  .item--locked:hover { transform: none; box-shadow: none; }
+  .item[disabled] { opacity: 1; }
+
+  .item__check {
+    position: absolute; top: -0.6rem; right: -0.6rem;
+    width: 2rem; height: 2rem; display: flex; align-items: center;
+    justify-content: center; font-size: var(--text-base); font-weight: 700;
+    color: var(--color-text-inverse); background: var(--color-living);
+    border: 2px solid var(--color-surface-raised); border-radius: 50%;
+  }
+
+  .controls { display: flex; justify-content: center; }
+  .reset {
+    min-height: var(--touch-min); padding-inline: var(--space-4);
+    font: inherit; font-weight: 700; color: var(--color-text-inverse);
+    background: var(--color-primary); border: none;
+    border-radius: var(--radius-md); cursor: pointer;
+    transition: background var(--transition-fast);
+  }
+  .reset:hover { background: var(--color-primary-strong); }
+
+  .win {
+    text-align: center; padding: var(--space-3);
+    background: var(--color-living-soft); border: 4px solid var(--color-living);
+    border-radius: var(--radius-lg); animation: pop var(--transition-base) ease-out;
+  }
+  .win__text { margin: 0; font-size: var(--text-xl); font-weight: 700; color: var(--color-primary-strong); }
+  .win__sub { margin: var(--space-1) 0 0; font-size: var(--text-base); color: var(--color-text-muted); }
+  @keyframes pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .footer {
+    border-top: 2px solid var(--color-border); padding-top: var(--space-2);
+    text-align: center; font-size: var(--text-sm); color: var(--color-text-muted);
+  }
+  .footer__help { margin: 0 0 var(--space-1); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .item, .bin, .win, .reset { transition: none; animation: none; }
+    .item:hover, .item--selected, .bin--over { transform: none; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#sim">Skip to the activity</a>
+<noscript>This activity needs JavaScript turned on. Ask your teacher for help turning it on.</noscript>
+
+<main class="shell" id="sim">
+  <header class="header">
+    <h1 class="title">Living vs. Non-Living Sorter</h1>
+    <p class="summary">Sort each thing into living or non-living.</p>
+  </header>
+
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  <div class="bins">
+    <button type="button" class="bin bin--living" id="bin-living" data-category="living">
+      <span class="bin__header">
+        <span class="bin__glyph" aria-hidden="true">🌱</span>
+        <span class="bin__title">Living</span>
+      </span>
+      <span class="bin__hint">Eats, grows, and has babies</span>
+      <span class="bin__items" data-bin-items="living"></span>
+    </button>
+
+    <button type="button" class="bin bin--nonliving" id="bin-nonliving" data-category="nonliving">
+      <span class="bin__header">
+        <span class="bin__glyph" aria-hidden="true">⚙️</span>
+        <span class="bin__title">Non-Living</span>
+      </span>
+      <span class="bin__hint">Does not eat or grow by itself</span>
+      <span class="bin__items" data-bin-items="nonliving"></span>
+    </button>
+  </div>
+
+  <section class="pool" aria-label="Things to sort">
+    <h2 class="pool__title">Things to sort</h2>
+    <div class="pool__items" id="pool"></div>
+  </section>
+
+  <div class="controls">
+    <button type="button" class="reset" id="reset">Start over</button>
+  </div>
+
+  <div id="win-area"></div>
+
+  <footer class="footer">
+    <p class="footer__help">
+      Keyboard: Tab to a thing, press Enter or Space to grab it, Tab to a bin, press Enter to drop. Press Escape to let go.
+    </p>
+    <p>A free, open activity you can use offline.</p>
+  </footer>
+
+  <!-- ARIA live region for assertive announcements (the win) -->
+  <div class="visually-hidden" id="live-assertive" aria-live="assertive" role="alert" aria-atomic="true"></div>
+</main>
+
+<script>
+"use strict";
+
+/* ----- Original SVG icons (built from scratch, no third-party art) ----- */
+const ICONS = {
+  frog: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="24" cy="30" rx="15" ry="11" fill="currentColor" fill-opacity="0.12"/><circle cx="17" cy="16" r="5" fill="currentColor" fill-opacity="0.12"/><circle cx="31" cy="16" r="5" fill="currentColor" fill-opacity="0.12"/><circle cx="17" cy="16" r="1.6" fill="currentColor" stroke="none"/><circle cx="31" cy="16" r="1.6" fill="currentColor" stroke="none"/><path d="M16 31q8 6 16 0"/><path d="M11 38l-4 4"/><path d="M37 38l4 4"/></svg>',
+  sunflower: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="18" r="6" fill="currentColor" fill-opacity="0.25"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12" transform="rotate(45 24 18)"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12" transform="rotate(90 24 18)"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12" transform="rotate(135 24 18)"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12" transform="rotate(180 24 18)"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12" transform="rotate(225 24 18)"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12" transform="rotate(270 24 18)"/><ellipse cx="24" cy="6.5" rx="2.6" ry="5" fill="currentColor" fill-opacity="0.12" transform="rotate(315 24 18)"/><path d="M24 24v16"/><path d="M24 32q7-1 9-6"/></svg>',
+  tree: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 42V26"/><circle cx="24" cy="16" r="10" fill="currentColor" fill-opacity="0.15"/><circle cx="15" cy="22" r="7" fill="currentColor" fill-opacity="0.15"/><circle cx="33" cy="22" r="7" fill="currentColor" fill-opacity="0.15"/><path d="M24 30l-5-4"/><path d="M24 33l5-4"/></svg>',
+  boy: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="12" r="6" fill="currentColor" fill-opacity="0.15"/><path d="M24 18v14"/><path d="M14 24h20"/><path d="M24 32l-6 10M24 32l6 10"/></svg>',
+  rock: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 34l5-13 9-4 11 5 3 12-11 4z" fill="currentColor" fill-opacity="0.18"/><path d="M19 21l4 7-6 6"/></svg>',
+  'teddy-bear': '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="14" cy="13" r="4.5" fill="currentColor" fill-opacity="0.15"/><circle cx="34" cy="13" r="4.5" fill="currentColor" fill-opacity="0.15"/><circle cx="24" cy="20" r="9" fill="currentColor" fill-opacity="0.15"/><circle cx="21" cy="19" r="1.4" fill="currentColor" stroke="none"/><circle cx="27" cy="19" r="1.4" fill="currentColor" stroke="none"/><circle cx="24" cy="23" r="1.6" fill="currentColor" stroke="none"/><rect x="16" y="29" width="16" height="13" rx="6" fill="currentColor" fill-opacity="0.12"/></svg>',
+  cloud: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 32a7 7 0 0 1 1-13 9 9 0 0 1 17-2 6 6 0 0 1 2 15z" fill="currentColor" fill-opacity="0.15"/></svg>',
+  robot: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="14" width="20" height="18" rx="3" fill="currentColor" fill-opacity="0.12"/><circle cx="20" cy="22" r="2" fill="currentColor" stroke="none"/><circle cx="28" cy="22" r="2" fill="currentColor" stroke="none"/><path d="M19 28h10"/><path d="M24 14v-5"/><circle cx="24" cy="7" r="2" fill="currentColor" stroke="none"/><path d="M19 32v6M29 32v6"/></svg>'
+};
+const FALLBACK_ICON = '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="14" fill="currentColor" fill-opacity="0.1"/><path d="M20 19a4 4 0 1 1 5 4c-1 1-1 2-1 3"/><circle cx="24" cy="32" r="1.4" fill="currentColor" stroke="none"/></svg>';
+
+/* ----- The exact item data ----- */
+const ITEMS = [
+  { id: 'frog',       label: 'Frog',       answer: 'living',    tricky: false, hint: 'A frog eats, grows, and has babies. It is living.' },
+  { id: 'sunflower',  label: 'Sunflower',  answer: 'living',    tricky: false, hint: 'A sunflower grows from a seed and needs water and light. It is living.' },
+  { id: 'tree',       label: 'Tree',       answer: 'living',    tricky: false, hint: 'A tree grows bigger every year and makes seeds. It is living.' },
+  { id: 'boy',        label: 'Boy',        answer: 'living',    tricky: false, hint: 'A boy eats, grows, and breathes. He is living.' },
+  { id: 'rock',       label: 'Rock',       answer: 'nonliving', tricky: false, hint: 'A rock does not eat or grow on its own. It is non-living.' },
+  { id: 'teddy-bear', label: 'Teddy Bear', answer: 'nonliving', tricky: true,  hint: 'A teddy bear looks like an animal, but it does not eat or grow. It is non-living.' },
+  { id: 'cloud',      label: 'Cloud',      answer: 'nonliving', tricky: true,  hint: 'A cloud can move, but moving does not make it alive. It does not eat or grow. It is non-living.' },
+  { id: 'robot',      label: 'Robot',      answer: 'nonliving', tricky: true,  hint: 'A robot can move and beep, but it does not eat or grow by itself. It is non-living.' }
+];
+
+const CATEGORY_LABEL = { living: 'living', nonliving: 'non-living' };
+
+/* ----- State ----- */
+let state;
+
+function buildInitialState() {
+  const placements = {};
+  ITEMS.forEach(function (it) { placements[it.id] = 'unsorted'; });
+  return {
+    placements: placements,   // id -> 'living' | 'nonliving' | 'unsorted'
+    matches: [],              // ids correctly placed (locked)
+    mistakes: 0,
+    isComplete: false,
+    selectedItemId: null,     // keyboard-grabbed item
+    statusText: 'Sort ' + ITEMS.length + ' things into living or non-living.',
+    order: shuffle(ITEMS.map(function (it) { return it.id; }))
+  };
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function itemById(id) {
+  return ITEMS.find(function (it) { return it.id === id; });
+}
+
+/* ----- DOM refs ----- */
+const els = {
+  status: document.getElementById('status'),
+  pool: document.getElementById('pool'),
+  binLivingItems: document.querySelector('[data-bin-items="living"]'),
+  binNonlivingItems: document.querySelector('[data-bin-items="nonliving"]'),
+  binLiving: document.getElementById('bin-living'),
+  binNonliving: document.getElementById('bin-nonliving'),
+  reset: document.getElementById('reset'),
+  winArea: document.getElementById('win-area'),
+  liveAssertive: document.getElementById('live-assertive')
+};
+
+/* ----- Announcements ----- */
+function announceAssertive(message) {
+  els.liveAssertive.textContent = '';
+  window.setTimeout(function () { els.liveAssertive.textContent = message; }, 50);
+}
+
+/* ----- Core actions ----- */
+function selectItem(id) {
+  const item = itemById(id);
+  if (!item) return;
+  if (state.placements[id] === item.answer) return; // locked
+  state.selectedItemId = (state.selectedItemId === id) ? null : id;
+  state.statusText = state.selectedItemId == null
+    ? 'Let go of ' + item.label + '.'
+    : item.label + ' is grabbed. Choose living or non-living.';
+  render();
+}
+
+function clearSelection() {
+  if (state.selectedItemId == null) return;
+  state.selectedItemId = null;
+  state.statusText = 'Let go.';
+  render();
+}
+
+function placeItem(id, category) {
+  const item = itemById(id);
+  if (!item) return;
+  if (state.placements[id] === item.answer) return; // already correct
+
+  const correct = item.answer === category;
+  state.placements[id] = category;
+
+  if (correct) {
+    if (state.matches.indexOf(id) === -1) state.matches.push(id);
+  } else {
+    state.matches = state.matches.filter(function (m) { return m !== id; });
+    state.mistakes += 1;
+  }
+
+  state.isComplete = state.matches.length === ITEMS.length;
+  state.selectedItemId = null;
+
+  if (correct) {
+    state.statusText = state.isComplete
+      ? 'All done!'
+      : 'Yes! ' + item.label + ' is ' + CATEGORY_LABEL[item.answer] + '.';
+  } else {
+    state.statusText = 'Not quite. ' + item.hint;
+  }
+
+  if (state.isComplete) {
+    announceAssertive('Great job! Everything is sorted. You made ' +
+      state.mistakes + (state.mistakes === 1 ? ' mistake.' : ' mistakes.'));
+  }
+
+  render();
+}
+
+function placeSelected(category) {
+  if (state.selectedItemId == null) return;
+  placeItem(state.selectedItemId, category);
+}
+
+function reset() {
+  state = buildInitialState();
+  render();
+}
+
+/* ----- Rendering ----- */
+function makeItemButton(id) {
+  const item = itemById(id);
+  const placement = state.placements[id];
+  const locked = state.matches.indexOf(id) !== -1;
+  const selected = state.selectedItemId === id;
+  const misplaced = placement !== 'unsorted' && !locked;
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'item' +
+    (selected ? ' item--selected' : '') +
+    (locked ? ' item--locked' : '') +
+    (misplaced ? ' item--misplaced' : '');
+  btn.setAttribute('draggable', String(!locked));
+  btn.setAttribute('aria-pressed', String(selected));
+  btn.dataset.itemId = id;
+  if (locked) { btn.disabled = true; btn.setAttribute('aria-disabled', 'true'); }
+
+  const stateLabel = locked ? 'sorted correctly'
+    : selected ? 'grabbed, choose a bin' : 'press to grab';
+
+  btn.innerHTML =
+    '<span class="item__glyph" aria-hidden="true">' + (ICONS[id] || FALLBACK_ICON) + '</span>' +
+    '<span class="item__label">' + item.label + '</span>' +
+    '<span class="visually-hidden">, ' + stateLabel + '</span>' +
+    (locked ? '<span class="item__check" aria-hidden="true">\u2713</span>' : '');
+
+  if (!locked) {
+    btn.addEventListener('click', function () { selectItem(id); });
+    btn.addEventListener('dragstart', function (e) {
+      e.dataTransfer.setData('text/plain', id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+  }
+  return btn;
+}
+
+function render() {
+  // Status
+  els.status.textContent = state.statusText;
+
+  // Clear containers
+  els.pool.innerHTML = '';
+  els.binLivingItems.innerHTML = '';
+  els.binNonlivingItems.innerHTML = '';
+
+  // Distribute items by placement, preserving shuffled order
+  let poolCount = 0;
+  state.order.forEach(function (id) {
+    const placement = state.placements[id];
+    const btn = makeItemButton(id);
+    if (placement === 'living') {
+      els.binLivingItems.appendChild(btn);
+    } else if (placement === 'nonliving') {
+      els.binNonlivingItems.appendChild(btn);
+    } else {
+      els.pool.appendChild(btn);
+      poolCount++;
+    }
+  });
+
+  if (poolCount === 0) {
+    const p = document.createElement('p');
+    p.className = 'pool__empty';
+    p.textContent = state.isComplete ? 'All sorted!' : 'Move any wrong ones to the other bin.';
+    els.pool.appendChild(p);
+  }
+
+  // Bins armed for keyboard placement
+  const armed = state.selectedItemId != null;
+  els.binLiving.classList.toggle('bin--armed', armed);
+  els.binNonliving.classList.toggle('bin--armed', armed);
+
+  // Bin labels reflect locked counts only
+  const livingCount = state.matches.filter(function (id) { return itemById(id).answer === 'living'; }).length;
+  const nonlivingCount = state.matches.filter(function (id) { return itemById(id).answer === 'nonliving'; }).length;
+  els.binLiving.setAttribute('aria-label', 'Living bin. Eats, grows, and has babies. ' + livingCount + (livingCount === 1 ? ' thing' : ' things') + ' here.');
+  els.binNonliving.setAttribute('aria-label', 'Non-Living bin. Does not eat or grow by itself. ' + nonlivingCount + (nonlivingCount === 1 ? ' thing' : ' things') + ' here.');
+
+  // Win banner
+  els.winArea.innerHTML = '';
+  if (state.isComplete) {
+    const win = document.createElement('div');
+    win.className = 'win';
+    win.setAttribute('role', 'status');
+    win.innerHTML =
+      '<p class="win__text">Great job! You sorted everything.</p>' +
+      '<p class="win__sub">Mistakes along the way: ' + state.mistakes + '</p>';
+    els.winArea.appendChild(win);
+  }
+}
+
+/* ----- Bin wiring (drag + keyboard place) ----- */
+function wireBin(binEl, category, itemsEl) {
+  binEl.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    binEl.classList.add('bin--over');
+  });
+  binEl.addEventListener('dragleave', function (e) {
+    // Only clear when leaving the bin itself, not a child
+    if (!binEl.contains(e.relatedTarget)) binEl.classList.remove('bin--over');
+  });
+  binEl.addEventListener('drop', function (e) {
+    e.preventDefault();
+    binEl.classList.remove('bin--over');
+    const id = e.dataTransfer.getData('text/plain');
+    if (id) placeItem(id, category);
+  });
+  binEl.addEventListener('click', function (e) {
+    // Clicking an item inside the bin re-grabs it; that item handles its own click.
+    if (e.target.closest('.item')) return;
+    if (state.selectedItemId != null) placeSelected(category);
+  });
+}
+
+wireBin(els.binLiving, 'living', els.binLivingItems);
+wireBin(els.binNonliving, 'nonliving', els.binNonlivingItems);
+
+els.reset.addEventListener('click', reset);
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && state.selectedItemId != null) clearSelection();
+});
+
+/* ----- Go ----- */
+reset();
+</script>
+</body>
+</html>
